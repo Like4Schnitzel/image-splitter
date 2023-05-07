@@ -1,5 +1,4 @@
 #include "imageWizardry.hpp"
-#include <exception>
 
 imageWizardry::imageWizardry(bool scaleImage)
 {
