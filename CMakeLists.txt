@@ -1,0 +1,7 @@
+cmake_minimum_required(VERSION 2.9)
+set(CMAKE_CXX_STANDARD 17)
+project( ImageSplitter )
+find_package( OpenCV REQUIRED )
+include_directories( ${OpenCV_INCLUDE_DIRS} )
+add_executable( ImageSplitter main.cpp imageWizardry.cpp utils.cpp )
+target_link_libraries( ImageSplitter stdc++fs ${OpenCV_LIBS} )
