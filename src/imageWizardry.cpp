@@ -1,4 +1,6 @@
 #include "imageWizardry.hpp"
+#include <filesystem>
+#include <opencv2/imgcodecs.hpp>
 
 imageWizardry::imageWizardry(bool scaleImage)
 {
@@ -18,7 +20,7 @@ void imageWizardry::splitFrame()
 
             x += columnsSize;
 
-            cv::imwrite(this->outputFolder + "/" + utils::cutOffExtension(filename) + "_" + utils::intToStr(i) + "_" + utils::intToStr(j) + ".png", cropImg);
+            cv::imwrite(this->outputFolder + "/" + utils::cutOffExtension(this->filename) + "_" + utils::intToStr(i) + "_" + utils::intToStr(j) + ".png", cropImg);
         }
 
         y += rowsSize;
@@ -73,39 +75,9 @@ void imageWizardry::loopThroughDir(std::string dir)
         //d_type 8 means file, 4 means directory
         if ((int)(entry->d_type) == 8 && (utils::hasImageExtension(entry->d_name)))
         {
-            this->image = cv::imread(this->workingDirectory + "/" + entry->d_name);
-
-            if (image.data)
-            {
-                this->filename = entry->d_name;
-                this->outputFolder = this->workingDirectory + "/" + utils::cutOffExtension(this->filename);
-                std::cout << "Found " << entry->d_name << " (" << this->image.size().width << "x" << this->image.size().height << "px)\n";
-                if (std::filesystem::directory_entry(this->outputFolder).exists())
-                {
-                    std::string option;
-                    std::cout << "Output folder already exists, skip? [Y/n] ";
-                    std::getline(std::cin, option);
-                    if (option.empty() || (option[0] != 'n' && option[0] != 'N'))
-                    {
-                        std::cout << "\n";
-                        continue;
-                    }
-                }
-
-                this->columns = 0; this->rows = 0; this->columnsSize = 48; this->rowsSize = 48;
-                std::string columnsInput, rowsInput;
-                
-                inputLoop("column", this->columns, this->columnsSize, image.size().width);
-                inputLoop("row", this->rows, this->rowsSize, image.size().height);
-
-                std::cout << "Splitting into " << (scale ? "scaled " : "") << this->columns << "x" << this->rows << " blocks with " << (scale ? "initial " : "") << "sizes of " << this->columnsSize << "x" << this->rowsSize << "px\n";
-                
-                int averageDimension = (columnsSize + rowsSize) / 2;
-                this->blockSize = cv::Size(averageDimension, averageDimension);
-                mkdir(this->outputFolder.c_str(), S_IRWXU + S_IRWXG + S_IRWXO);
-                splitFrame();
-                std::cout << "\n";
-            }
+            this->filename = entry->d_name;
+            this->image = cv::imread(this->workingDirectory + "/" + this->filename);
+            processFile();
         }
     }
 
@@ -113,3 +85,52 @@ void imageWizardry::loopThroughDir(std::string dir)
     closedir(dp);
 }
 
+void imageWizardry::splitThis(std::string path)
+{
+    if (std::filesystem::is_directory(path))
+    {
+        loopThroughDir(path);
+    }
+    else
+    {
+        std::filesystem::path realPath = std::filesystem::path(path);
+        this->workingDirectory = realPath.parent_path().string();
+        this->image = cv::imread(path);
+        this->filename = realPath.filename();
+        processFile();
+    }
+}
+
+void imageWizardry::processFile()
+{
+    if (this->image.data)
+    {
+        this->outputFolder = this->workingDirectory + "/" + utils::cutOffExtension(this->filename);
+        std::cout << "Found " << this->filename << " (" << this->image.size().width << "x" << this->image.size().height << "px)\n";
+        if (std::filesystem::directory_entry(this->outputFolder).exists())
+        {
+            std::string option;
+            std::cout << "Output folder already exists, skip? [Y/n] ";
+            std::getline(std::cin, option);
+            if (option.empty() || (option[0] != 'n' && option[0] != 'N'))
+            {
+                std::cout << "\n";
+                return;
+            }
+        }
+
+        this->columns = 0; this->rows = 0; this->columnsSize = 48; this->rowsSize = 48;
+        std::string columnsInput, rowsInput;
+        
+        inputLoop("column", this->columns, this->columnsSize, image.size().width);
+        inputLoop("row", this->rows, this->rowsSize, image.size().height);
+
+        std::cout << "Splitting into " << (scale ? "scaled " : "") << this->columns << "x" << this->rows << " blocks with " << (scale ? "initial " : "") << "sizes of " << this->columnsSize << "x" << this->rowsSize << "px\n";
+        
+        int averageDimension = (columnsSize + rowsSize) / 2;
+        this->blockSize = cv::Size(averageDimension, averageDimension);
+        mkdir(this->outputFolder.c_str(), S_IRWXU + S_IRWXG + S_IRWXO);
+        splitFrame();
+        std::cout << "\n";
+    }
+}

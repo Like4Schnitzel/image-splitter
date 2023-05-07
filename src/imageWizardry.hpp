@@ -10,6 +10,8 @@ class imageWizardry
 {
 public:
     void splitFrame();
+    void processFile();
+    void splitThis(std::string);
     void loopThroughDir(std::string);
     imageWizardry(bool);
 

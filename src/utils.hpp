@@ -4,9 +4,9 @@
 class utils
 {
 public:
-    static bool strEndsWith(std::string str, std::string ending);
-    static bool hasImageExtension(std::string filename);
-    static std::string cutOffExtension(std::string filename);
-    static int parseInt(std::string str);
-    static std::string intToStr(int n);
+    static bool strEndsWith(std::string, std::string);
+    static bool hasImageExtension(std::string);
+    static std::string cutOffExtension(std::string);
+    static int parseInt(std::string);
+    static std::string intToStr(int);
 };

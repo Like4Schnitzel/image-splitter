@@ -1,14 +1,31 @@
 #include "utils.hpp"
 #include "imageWizardry.hpp"
+#include <filesystem>
 #include <string>
 
 int main(int argc, char** argv )
 {
-    bool scale = argc > 2 ? !(std::string(argv[2]) == "false") : true;
-    std::string currentDirectory = (argc > 1 ? argv[1] : std::filesystem::current_path().string());
+    std::string path;
+    if (argc > 1)
+    {
+        path = std::filesystem::absolute(argv[1]).string();
+    }
+    else
+    {
+        path = std::filesystem::current_path().string();
+    }
 
+    bool scale;
+    if (argc > 2)
+    {
+        scale = std::string(argv[2]) != "false";
+    }
+    else 
+    {
+        scale = true;
+    }
     imageWizardry magic = imageWizardry(scale);
-    magic.loopThroughDir(currentDirectory);
+    magic.splitThis(path);
 
     std::cout << "Done!\n";
     return 0;
